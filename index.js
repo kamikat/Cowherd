@@ -33,16 +33,16 @@ module.exports = function (config) {
 
       callbackFetchKey: 1,
       callbackBodyType: "application/json",
-			callbackBody: {
+      callbackBody: {
         bucket: "$(bucket)",
-				key: "$(key)",
-				hash: "$(etag)",
-				etag: "$(etag)",
-				fname: "$(fname)",
-				fsize: "$(fsize)",
-				mimeType: "$(mimeType)",
-				uuid: "$(uuid)"
-			},
+        key: "$(key)",
+        hash: "$(etag)",
+        etag: "$(etag)",
+        fname: "$(fname)",
+        fsize: "$(fsize)",
+        mimeType: "$(mimeType)",
+        uuid: "$(uuid)"
+      },
 
       callback: _.identity,
 
