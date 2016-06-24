@@ -66,7 +66,7 @@ module.exports = function (config) {
   app.use(morgan('combined'));
   app.use(parser.json());
 
-  var captureCallback = function (policy, naming) {
+  var captureCallback = function (policy, autoKeyNaming) {
     var callback = policy.callback;
     if (callback) {
       var callbackPath = "_callbacks/" + crypto.rng(16).toString('hex');
@@ -74,9 +74,10 @@ module.exports = function (config) {
       delete policy.callback;
       app.post("/" + callbackPath, function (req, res, next) {
         if (policy.callbackFetchKey) {
+          var key = autoKeyNaming(req.body);
           var data = {
-            key: naming(req.body),
-            payload: callback(req.body)
+            key: key,
+            payload: _.extend(callback(req.body), { key: key })
           }
           debug("callback: " + JSON.stringify(data));
           return res.status(200).send(data);
