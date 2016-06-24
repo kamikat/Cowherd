@@ -12,12 +12,12 @@ var utils = require('./utils');
 module.exports = function (config) {
   config = _.defaults(config, {
 
-    accessKey: "<required>",
-    secretKey: "<required>",
+    accessKey: "YOUR_ACCESS_KEY",
+    secretKey: "YOUR_SECRET_KEY",
 
-    bucket: "<required|per-route-conf>",
+    bucket: "DEFAULT_BUCKET_NAME",
 
-    callbackUrl: "<required>",
+    callbackUrl: "CALLBACK_URL_TEMPLATE",
 
     autoKeyNaming: require('./strategy/sha1'),
 
