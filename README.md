@@ -43,7 +43,7 @@ cowherd({
         }
     ]
 }).listen(8020, '::', function () {
-    console.log('Qiniu token server started');
+    console.log('Qiniu uptoken service started');
 });
 ```
 
@@ -70,8 +70,41 @@ Cowherd is configured to generate upload token in `callbackFetchKey` mode
 }
 ```
 
-Once file is uploaded to Qiniu, `callbackUrl`  is called. Received data is collected and passed to route's
-`autoKeyNaming` function to decide the key the uploaded file (see [strategy/sha1.js](strategy/sha1.js) for details).
+After file is uploaded to Qiniu, `callbackUrl` is called. `callbackBody` is collected and passed to route's
+`autoKeyNaming` function to decide the key of uploaded file (see [strategy/sha1.js](strategy/sha1.js) for details).
+
+### Download Token ###
+
+Download token is required to access resource from Qiniu private bucket.
+Add a `get` object to route config object:
+
+```javascript
+var utils = require('cowherd/utils');
+
+cowherd({
+
+    // ...
+
+    routes: [
+        {
+            match: '/photos',
+            policy: {
+                mimeLimit: "image/*"
+            },
+            get: {
+                deadline: utils.expiresIn(3600) // Optional, expiration time function
+            }
+        },
+        // ...
+    ]
+
+})
+
+//...
+```
+
+Send a GET request to `/photos?url=http%3A%2F%2F78re52.com1.z0.glb.clouddn.com%2Fresource%2Fflower.jpg` should
+generates a download token for `http://78re52.com1.z0.glb.clouddn.com/resource/flower.jpg` expires in 3600 seconds.
 
 ### Advanced Usage ###
 
@@ -86,7 +119,7 @@ Once file is uploaded to Qiniu, `callbackUrl`  is called. Received data is colle
 ### Roadmap ###
 
 - [x] Upload token generation framework
-- [ ] Download token generation framework
+- [x] Download token generation framework
 
 License
 -------
