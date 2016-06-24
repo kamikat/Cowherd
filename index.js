@@ -69,18 +69,25 @@ module.exports = function (config) {
   var captureCallback = function (policy, autoKeyNaming) {
     var callback = policy.callback;
     if (callback) {
+      if (callback.length < 2) {
+        var _callback = callback;
+        callback = function (data, next) {
+          next(_callback(data));
+        };
+      }
       var callbackPath = "_callbacks/" + crypto.rng(16).toString('hex');
       policy.callbackUrl = config.callbackUrl.replace(':callback', callbackPath)
       delete policy.callback;
       app.post("/" + callbackPath, function (req, res, next) {
         if (policy.callbackFetchKey) {
           var key = autoKeyNaming(req.body);
-          var data = {
+          callback({
             key: key,
-            payload: _.extend(callback(req.body), { key: key })
-          }
-          debug("callback: " + JSON.stringify(data));
-          return res.status(200).send(data);
+            payload: _.extend(req.body, { key: key })
+          }, function (data) {
+            debug("callback: " + JSON.stringify(data));
+            return res.status(200).send(data);
+          });
         } else {
           return res.status(200).send(callback(req.body));
         }
