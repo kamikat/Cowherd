@@ -163,10 +163,10 @@ module.exports = function (config) {
           }
           debug("authenticated.")
           ctx.url = req.query.url;
-          var u = url.parse(ctx.url);
-          var query = qs.decode(u.query);
+          var parts = url.parse(ctx.url);
+          var query = qs.decode(parts.query);
           query.e = findE(ctx);
-          u.query = qs.encode(query);
+          parts.search = "?" + qs.encode(query);
           delete u.search;
           var urlString = u.format();
           debug("download " + req.path + " => " + urlString);
