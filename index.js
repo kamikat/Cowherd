@@ -1,11 +1,13 @@
 var _ = require('lodash');
+var url = require('url');
+var qs = require('querystring');
 var crypto = require('crypto');
 var express = require('express');
 var morgan = require('morgan');
 var parser = require('body-parser');
 var bytes = require('bytes');
-var utils = require('node-qiniu/lib/utils');
 var debug = require('debug')('cowherd');
+var utils = require('./utils');
 
 module.exports = function (config) {
   config = _.defaults(config, {
@@ -22,9 +24,7 @@ module.exports = function (config) {
     defaultPolicy: _.defaults(config.defaultPolicy || {}, {
 
       scope: config.bucket,
-      deadline: function () {
-        return parseInt(Date.now() / 1000) + 3600
-      },
+      deadline: utils.expiresIn(3600),
 
       fsizeMin: 0,
       fsizeLimit: bytes('4mb'),
@@ -52,7 +52,10 @@ module.exports = function (config) {
       {
         match: '/',
         authenticator: null,
-        policy: { }
+        policy: { },
+        get: {
+          deadline: utils.expiresIn(3600)
+        }
       }
     ],
 
@@ -117,12 +120,12 @@ module.exports = function (config) {
         policy = config.defaultPolicy;
       }
       return _.extend(_.cloneDeep(policy), {
-        deadline: policy.deadline()
+        deadline: policy.deadline(ctx)
       });
     }
 
     app.post(route.match, function (req, res, next) {
-      var ctx = {};
+      var ctx = { req: req };
       authenticate(req, res, ctx, function (err) {
         if (err) {
           return next(err);
@@ -137,6 +140,41 @@ module.exports = function (config) {
         ].join(':'));
       });
     });
+
+    if (route.get) {
+      var findE = function (ctx) {
+        if (route.get.deadline) {
+          return route.get.deadline(ctx);
+        }
+        if (route.policy && route.policy.deadline) {
+          return route.policy.deadline(ctx);
+        }
+        if (config.defaultPolicy && config.defaultPolicy.deadline) {
+          return config.defaultPolicy.deadline(ctx);
+        }
+      };
+
+      app.get(route.match, function (req, res, next) {
+        var ctx = { req: req };
+        authenticate(req, res, ctx, function (err) {
+          if (err) {
+            return next(err);
+          }
+          debug("authenticated.")
+          ctx.url = req.query.url;
+          var u = url.parse(ctx.url);
+          var query = qs.decode(u.query);
+          query.e = findE(ctx);
+          u.query = qs.encode(query);
+          delete u.search;
+          var urlString = u.format();
+          debug("download " + req.path + " => " + urlString);
+          return res.status(200).send([
+            config.accessKey, utils.encodeSign(urlString, config.secretKey)
+          ].join(':'));
+        });
+      });
+    }
 
   });
 
