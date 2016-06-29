@@ -76,7 +76,7 @@ module.exports = function (config) {
         };
       }
       var callbackPath = "_callbacks/" + crypto.rng(16).toString('hex');
-      policy.callbackUrl = config.callbackUrl.replaceAll(/:callback/g, callbackPath)
+      policy.callbackUrl = config.callbackUrl.replace(/:callback/g, callbackPath)
       delete policy.callback;
       app.post("/" + callbackPath, function (req, res, next) {
         if (policy.callbackFetchKey) {
