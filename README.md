@@ -82,9 +82,7 @@ Add a `get` object to route config object:
 var utils = require('cowherd/utils');
 
 cowherd({
-
     // ...
-
     routes: [
         {
             match: '/photos',
@@ -97,10 +95,7 @@ cowherd({
         },
         // ...
     ]
-
-})
-
-//...
+}).listen(...);
 ```
 
 Send a GET request to `/photos?url=http%3A%2F%2F78re52.com1.z0.glb.clouddn.com%2Fresource%2Fflower.jpg` should
@@ -110,16 +105,54 @@ generates a download token for `http://78re52.com1.z0.glb.clouddn.com/resource/f
 
 #### Authentication ####
 
+Authentication is implemented in standard connect middleware style. Here's an implementation of JWT authentication:
+
+```javascript
+// simple JWT authenticator
+var jwt = require('jwt-simple');
+var jwtAuthenticator = (req, res, ctx, next) => {
+    try {
+        var token = jwt.decode(req.headers["authorization"], process.env.JWT_SECRET, false, process.env.JWT_MODE);
+        if (Date.now() > token.expires_at * 1000) {
+          return res.status(401).send();
+        }
+        return next();
+    } catch (e) {
+        return res.status(401).send();
+    }
+};
+
+cowherd({
+    // ...
+    routes: [
+        {
+            match: '/photos',
+            authenticator: jwtAuthenticator,
+            // ...
+        }
+    ]
+}).listen(...);
+```
+
+#### Handle duplicate keys ####
+
+Upload files with same content will callback with a same qetag. When using naming function generating filename from etag
+(eg, etag/sha1 naming function) Qiniu would throw an error to the upload client.
+A workaround is to return a different key to Qiniu and use naming function only in key returned to upload client.
+
 (TODO)
 
 #### Disable automatic key naming ####
 
-(TODO)
+Use a `noop` naming function:
 
-### Roadmap ###
-
-- [x] Upload token generation framework
-- [x] Download token generation framework
+```javascript
+cowherd({
+    // ...
+    autoKeyNaming: require('cowherd/strategy/noop'),
+    // ...
+}).listen(...);
+```
 
 License
 -------
