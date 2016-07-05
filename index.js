@@ -72,7 +72,7 @@ module.exports = function (config) {
       if (callback.length < 2) {
         var _callback = callback;
         callback = function (data, next) {
-          next(_callback(data));
+          next(null, _callback(data));
         };
       }
       var callbackPath = "_callbacks/" + crypto.rng(16).toString('hex');
@@ -84,7 +84,10 @@ module.exports = function (config) {
           callback({
             key: key,
             payload: _.extend(req.body, { key: key })
-          }, function (data) {
+          }, function (err, data) {
+            if (err) {
+              return next(err);
+            }
             debug("callback: " + JSON.stringify(data));
             return res.status(200).send(data);
           });
