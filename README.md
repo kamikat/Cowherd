@@ -140,7 +140,33 @@ Upload files with same content will callback with a same qetag. When using namin
 (eg, etag/sha1 naming function) Qiniu would throw an error to the upload client.
 A workaround is to return a different key to Qiniu and use naming function only in key returned to upload client.
 
-(TODO)
+Override `callback` function of policy object:
+
+```javascript
+var request = require('request');
+
+policy: {
+    //...
+    callback: (data, next) => {
+      var url = `${DOMAIN_PREFIX}/${data.key}`;
+      request.head(url, (err, res) => {
+        if (err) {
+          return next(err)
+        }
+        if (res.statusCode !== 404) {
+          data.key = `.qn-shim/${data.key}-${data.payload.uuid}`;
+        }
+        return next(null, data);
+      });
+    }
+}
+```
+
+The `data` object is a response object to Qiniu callback. `data.key` is key of uploaded file and `data.payload` will be sent to upload client.
+To avoid error on uploading same file, a simple check of key existence is applied and the key is re-written to `.qn-shim/{key}-{uuid}` (and
+the file is in bucket now).
+
+It's recommended to setup some task to clean-up these files periodically.
 
 #### Disable automatic key naming ####
 
