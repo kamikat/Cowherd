@@ -76,7 +76,7 @@ module.exports = function (config) {
         };
       }
       var callbackPath = "_callbacks/" + crypto.rng(16).toString('hex');
-      policy.callbackUrl = config.callbackUrl.replace(/:callback/g, callbackPath)
+      policy.callbackUrl = config.callbackUrl.replace(/:callback/g, callbackPath);
       delete policy.callback;
       app.post("/" + callbackPath, function (req, res, next) {
         if (policy.callbackFetchKey) {
@@ -117,7 +117,7 @@ module.exports = function (config) {
         debug("authentication disabled.");
         return next();
       }
-    }
+    };
 
     var makePolicy = function (ctx) {
       var policy;
@@ -133,7 +133,7 @@ module.exports = function (config) {
       return _.extend(_.cloneDeep(policy), {
         deadline: policy.deadline(ctx)
       });
-    }
+    };
 
     app.post(route.match, function (req, res, next) {
       var ctx = { req: req };
@@ -141,7 +141,7 @@ module.exports = function (config) {
         if (err) {
           return next(err);
         }
-        debug("authenticated.")
+        debug("authenticated.");
         var policy = makePolicy(ctx);
         var json = JSON.stringify(policy);
         var b64string = utils.safeEncode(json);
@@ -171,7 +171,7 @@ module.exports = function (config) {
           if (err) {
             return next(err);
           }
-          debug("authenticated.")
+          debug("authenticated.");
           ctx.url = req.query.url;
           var parts = url.parse(ctx.url);
           var query = qs.decode(parts.query);
