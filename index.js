@@ -146,9 +146,12 @@ module.exports = function (config) {
         var json = JSON.stringify(policy);
         var b64string = utils.safeEncode(json);
         debug("policy " + req.path + " => " + json);
-        return res.status(200).send([
-          config.accessKey, utils.encodeSign(b64string, config.secretKey), b64string
-        ].join(':'));
+        var token = [ config.accessKey, utils.encodeSign(b64string, config.secretKey), b64string ].join(':');
+        if (req.accepts('json')) {
+          return res.status(200).send({ uptoken: token });
+        } else {
+          return res.status(200).send(token);
+        }
       });
     });
 
